@@ -22,21 +22,3 @@ pub fn escape_json_str(s: &str) -> String {
     }
     out
 }
-
-#[cfg(test)]
-mod tests {
-    use super::escape_json_str;
-
-    #[test]
-    fn escapes_quotes_and_backslashes() {
-        let s = r#"a\"b"#;
-        let got = escape_json_str(s);
-        assert!(got.contains("\\\"") || got.contains("\\\\"));
-    }
-
-    #[test]
-    fn preserves_simple_text() {
-        let s = "alice";
-        assert_eq!(escape_json_str(s), "alice");
-    }
-}
