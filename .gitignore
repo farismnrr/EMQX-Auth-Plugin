@@ -1,3 +1,4 @@
 rocksdb-data/
 target/
 .idea/
+.env
