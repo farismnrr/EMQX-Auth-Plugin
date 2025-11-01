@@ -1,5 +1,4 @@
 use std::sync::Arc;
-
 use crate::repositories::get_user_list_repository::GetUserListRepository;
 use crate::services::service_error::UserServiceError;
 use crate::dtos::user_dto::UserDTO;

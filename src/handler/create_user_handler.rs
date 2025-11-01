@@ -6,7 +6,6 @@ use crate::dtos::user_dto::CreateUserDTO;
 use crate::dtos::response_dto::ResponseDTO;
 use crate::utils::app_error::AppError;
 
-// AppState to hold services
 pub struct AppState {
     pub create_user_service: Arc<CreateUserService>,
 }
@@ -17,7 +16,6 @@ pub async fn create_user_handler(
     match data.create_user_service.create_user() {
         Ok((username, password)) => {
             let dto = CreateUserDTO { username, password };
-            // Return the concrete DTO directly; Actix/Serde will serialize it.
             HttpResponse::Ok().json(ResponseDTO {
                 success: true,
                 message: "User created successfully",

@@ -23,10 +23,25 @@ impl AppError for UserServiceError {
         match self {
             Self::Repository(e) => e.status_code(),
             Self::Hashing(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::UserNotFound(_) => StatusCode::NOT_FOUND,
+            Self::InvalidCredentials(_) => StatusCode::UNAUTHORIZED,
+            Self::BadRequest(_) => StatusCode::BAD_REQUEST,
+            Self::UserNotActive(_) => StatusCode::FORBIDDEN,
         }
     }
 
     fn message(&self) -> String {
-        self.to_string()
+        match self {
+            Self::BadRequest(_) => "Validation error".to_string(),
+            _ => self.to_string(),
+        }
     }
 }
+
+pub fn handle_user_service_error(e: &UserServiceError) -> actix_web::HttpResponse {
+    match e {
+        UserServiceError::BadRequest(errors) => e.http_response_with_details(errors),
+        _ => e.default_http_response(),
+    }
+}
+

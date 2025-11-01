@@ -1,4 +1,4 @@
-use serde::{Serialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
 pub struct UserDTO {
@@ -14,6 +14,12 @@ pub struct GetUserListDTO {
 
 #[derive(Serialize)]
 pub struct CreateUserDTO {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Deserialize)]
+pub struct CheckUserActiveDTO {
     pub username: String,
     pub password: String,
 }

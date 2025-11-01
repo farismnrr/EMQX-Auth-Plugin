@@ -14,4 +14,16 @@ pub trait AppError {
         };
         HttpResponse::build(self.status_code()).json(res)
     }
+
+    fn http_response_with_details<T>(&self, details: T) -> HttpResponse
+    where
+        T: serde::Serialize,
+    {
+        let res = ErrorResponseDTO {
+            success: false,
+            message: &self.message(),
+            details: Some(details),
+        };
+        HttpResponse::build(self.status_code()).json(res)
+    }
 }
