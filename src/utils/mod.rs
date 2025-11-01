@@ -1,24 +1,2 @@
-//! Utility helpers used across the crate.
-//!
-//! Small, dependency-free helpers live here. When functionality grows or needs
-//! robust serialization, prefer adding `serde` and moving logic into dedicated
-//! modules.
-
-/// Escape a string for safe inclusion in a JSON string value.
-/// This is a minimal implementation that covers common characters (quote,
-/// backslash and common control characters). It's intentionally small to avoid
-/// adding `serde` as a dependency at this stage.
-pub fn escape_json_str(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    for c in s.chars() {
-        match c {
-            '\\' => out.push_str("\\\\"),
-            '"' => out.push_str("\\\""),
-            '\n' => out.push_str("\\n"),
-            '\r' => out.push_str("\\r"),
-            '\t' => out.push_str("\\t"),
-            _ => out.push(c),
-        }
-    }
-    out
-}
+pub mod hash_password;
+pub mod app_error;

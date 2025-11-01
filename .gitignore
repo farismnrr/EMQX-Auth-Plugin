@@ -1,2 +1,3 @@
 rocksdb-data/
 target/
+.idea/
