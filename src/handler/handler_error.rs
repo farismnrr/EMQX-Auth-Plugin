@@ -1,16 +1,34 @@
-use actix_web::http::StatusCode;
-use crate::utils::app_error::AppError;
+//! Error handling and HTTP response conversion for the application.
+
+use actix_web::{http::StatusCode, HttpResponse};
+use serde::Serialize;
+
+use crate::dtos::response_dto::ErrorResponseDTO;
 use crate::repositories::repository_error::UserRepositoryError;
-use crate::services::service_error::UserServiceError;
+use crate::services::service_error::{UserServiceError, ValidationError};
+
+pub trait AppError: Sized {
+    fn status_code(&self) -> StatusCode;
+    fn message(&self) -> String;
+
+    fn to_http_response(&self) -> HttpResponse {
+        self.to_http_response_with_details::<()>(None)
+    }
+
+    fn to_http_response_with_details<T: Serialize>(&self, details: Option<T>) -> HttpResponse {
+        let response = ErrorResponseDTO {
+            success: false,
+            message: &self.message(),
+            result: None,
+            details,
+        };
+        HttpResponse::build(self.status_code()).json(response)
+    }
+}
 
 impl AppError for UserRepositoryError {
     fn status_code(&self) -> StatusCode {
-        match self {
-            Self::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::Encode(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::Decode(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::Utf8(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
+        StatusCode::INTERNAL_SERVER_ERROR
     }
 
     fn message(&self) -> String {
@@ -21,8 +39,7 @@ impl AppError for UserRepositoryError {
 impl AppError for UserServiceError {
     fn status_code(&self) -> StatusCode {
         match self {
-            Self::Repository(e) => e.status_code(),
-            Self::Hashing(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::Repository(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::UserNotFound(_) => StatusCode::NOT_FOUND,
             Self::InvalidCredentials(_) => StatusCode::UNAUTHORIZED,
             Self::BadRequest(_) => StatusCode::BAD_REQUEST,
@@ -38,10 +55,26 @@ impl AppError for UserServiceError {
     }
 }
 
-pub fn handle_user_service_error(e: &UserServiceError) -> actix_web::HttpResponse {
-    match e {
-        UserServiceError::BadRequest(errors) => e.http_response_with_details(errors),
-        _ => e.default_http_response(),
+pub fn handle_check_user_active_error(error: &UserServiceError) -> HttpResponse {
+    match error {
+        UserServiceError::BadRequest(errors) => {
+            let response: ErrorResponseDTO<&Vec<ValidationError>> = ErrorResponseDTO {
+                success: false,
+                message: "Validation error",
+                result: Some("deny"),
+                details: Some(errors),
+            };
+            HttpResponse::Ok().json(response)
+        }
+        _ => {
+            let response: ErrorResponseDTO<()> = ErrorResponseDTO {
+                success: false,
+                message: &error.to_string(),
+                result: Some("deny"),
+                details: None,
+            };
+            HttpResponse::Ok().json(response)
+        }
     }
 }
 

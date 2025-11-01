@@ -2,6 +2,7 @@ use std::sync::Arc;
 use crate::repositories::check_user_active_repository::CheckUserActiveRepository;
 use crate::services::service_error::{UserServiceError, ValidationError};
 use crate::dtos::user_dto::CheckUserActiveDTO;
+use crate::utils::hash_password::verify_password;
 
 pub struct CheckUserActiveService {
     repo: Arc<CheckUserActiveRepository>,
@@ -24,11 +25,13 @@ impl CheckUserActiveService {
             return Err(UserServiceError::UserNotActive("User is not active or deleted".to_string()));
         }
 
-        if user.as_ref().unwrap().password != dto.password {
+        let user_ref = user.as_ref().unwrap();
+        let is_valid = verify_password(&dto.password, &user_ref.password);
+        if !is_valid {
             return Err(UserServiceError::InvalidCredentials("Invalid credentials".to_string()));
         }
 
-        Ok(user.is_some())
+        Ok(true)
     }
     
     fn user_input_validation(&self, dto: &CheckUserActiveDTO) -> Result<bool, UserServiceError> {

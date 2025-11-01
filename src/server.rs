@@ -12,6 +12,7 @@ use crate::handler::check_user_active_handler::{check_user_active_handler, AppSt
 use crate::services::create_user_service::CreateUserService;
 use crate::services::get_user_list_service::GetUserListService;
 use crate::services::check_user_active_service::CheckUserActiveService;
+
 use crate::repositories::create_user_repository::CreateUserRepository;
 use crate::repositories::get_user_list_repository::GetUserListRepository;
 use crate::repositories::check_user_active_repository::CheckUserActiveRepository;
@@ -48,8 +49,8 @@ pub async fn run_server() -> std::io::Result<()> {
             .wrap(ApiKeyMiddleware)
             .service(
                 web::scope("/users")
-                    .route("", web::post().to(create_user_handler))
-                    .route("/validate", web::post().to(check_user_active_handler))
+                    .route("/create", web::post().to(create_user_handler))
+                    .route("/check", web::post().to(check_user_active_handler))
 
                     // Development only
                     .route("", web::get().to(get_user_list_handler)),

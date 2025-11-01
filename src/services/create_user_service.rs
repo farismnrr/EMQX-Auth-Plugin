@@ -18,8 +18,7 @@ impl CreateUserService {
     pub fn create_user(&self) -> Result<(String, String), UserServiceError> {
         let username = Self::create_username();
         let password = Self::create_password();
-        let hashed = hash_password(&password)
-            .map_err(|e| UserServiceError::Hashing(e))?;
+        let hashed = hash_password(&password);
         
         self.repo.create_user(&username, &hashed)?;
         Ok((username, password))

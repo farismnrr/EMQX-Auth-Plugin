@@ -4,7 +4,7 @@ use std::sync::Arc;
 use crate::services::get_user_list_service::GetUserListService;
 use crate::dtos::response_dto::ResponseDTO;
 use crate::dtos::user_dto::GetUserListDTO;
-use crate::utils::app_error::AppError;
+use crate::handler::handler_error::AppError;
 
 pub struct AppState {
     pub get_user_list_service: Arc<GetUserListService>,
@@ -18,7 +18,9 @@ pub async fn get_user_list_handler(
             success: true,
             message: "User list retrieved successfully",
             data: Some(GetUserListDTO { users }),
+            result: None,
         }),
-        Err(e) => e.default_http_response(),
+        Err(e) => e.to_http_response(),
     }
 }
+

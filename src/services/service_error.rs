@@ -1,4 +1,3 @@
-use argon2::password_hash;
 use thiserror::Error;
 use serde::Serialize;
 use crate::repositories::repository_error::UserRepositoryError;
@@ -13,9 +12,6 @@ pub struct ValidationError {
 pub enum UserServiceError {
     #[error("Repository error: {0}")]
     Repository(#[from] UserRepositoryError),
-
-    #[error("Hashing error: {0}")]
-    Hashing(password_hash::Error),
 
     #[error("User not found: {0}")]
     UserNotFound(String),

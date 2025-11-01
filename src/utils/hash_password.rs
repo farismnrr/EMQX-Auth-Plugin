@@ -1,19 +1,18 @@
-use argon2::{
-    Argon2,
-    password_hash::{PasswordHasher, SaltString, Error},
-};
-use argon2::password_hash::rand_core::OsRng;
+use sha2::{Sha256, Digest};
+use subtle::ConstantTimeEq;
+use hex;
 
-pub fn hash_password(password: &str) -> Result<String, Error> {
-    let salt = SaltString::generate(&mut OsRng);
-    let argon2 = Argon2::default();
-    let hash = argon2.hash_password(password.as_bytes(), &salt)?;
-    Ok(hash.to_string())
+/// Hash password (cepat, tanpa Argon2)
+pub fn hash_password(password: &str) -> String {
+    // Hash password pakai SHA-256
+    let mut hasher = Sha256::new();
+    hasher.update(password.as_bytes());
+    let result = hasher.finalize();
+    hex::encode(result)
 }
 
-// pub fn verify_password(password: &str, hash: &str) -> Result<bool, String> {
-//     let parsed_hash = PasswordHash::new(hash).map_err(|e| format!("Invalid hash: {}", e))?;
-//     Ok(Argon2::default()
-//         .verify_password(password.as_bytes(), &parsed_hash)
-//         .is_ok())
-// }
+/// Verifikasi password: bandingkan hash input dan hash tersimpan
+pub fn verify_password(password: &str, stored_hash: &str) -> bool {
+    let hashed_input = hash_password(password);
+    hashed_input.as_bytes().ct_eq(stored_hash.as_bytes()).into()
+}

@@ -64,6 +64,7 @@ where
                     success: false,
                     message: "Unauthorized",
                     details: None::<()>,
+                    result: None,
                 });
             return Box::pin(async move { Ok(req.into_response(res.map_into_right_body())) });
         }
