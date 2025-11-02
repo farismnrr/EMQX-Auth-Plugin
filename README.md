@@ -73,7 +73,7 @@ docker run -d \
   -e SECRET_KEY=<your-secret-key> \
   -e API_KEY=<your-api-key> \
   -e LOG_LEVEL=info \
-  ghcr.io/farismnrr/emqx-auth-module:latest
+  ghcr.io/farismnrr/emqx-auth-module:v0.1.0
 ```
 
 **Or direct execution:**
