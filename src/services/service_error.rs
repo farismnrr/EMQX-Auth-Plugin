@@ -25,7 +25,7 @@ pub enum MqttServiceError {
     #[error("Bad request")]
     BadRequest(Vec<ValidationError>),
 
-    #[error("Mqtt is not active or deleted: {0}")]
+    #[error("{0}")]
     MqttNotActive(String),
 
     #[error("JWT error: {0}")]

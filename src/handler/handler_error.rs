@@ -1,5 +1,3 @@
-//! Error handling and HTTP response conversion for the application.
-
 use actix_web::{http::StatusCode, HttpResponse};
 use serde::Serialize;
 

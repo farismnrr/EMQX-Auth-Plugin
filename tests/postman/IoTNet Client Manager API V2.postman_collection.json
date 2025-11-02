@@ -1,0 +1,745 @@
+{
+	"info": {
+		"_postman_id": "9a4c8dca-5ec1-451f-b80d-1ca3cabce9f2",
+		"name": "IoTNet Client Manager API V2",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "30262904",
+		"_collection_link": "https://lms555-7968.postman.co/workspace/16b288ac-a61f-45ce-8d85-f330bcfc2eff/collection/30262904-9a4c8dca-5ec1-451f-b80d-1ca3cabce9f2?action=share&source=collection_link&creator=30262904"
+	},
+	"item": [
+		{
+			"name": "Add User without Authorization",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{URL}}/mqtt/create",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add User with Empty Payload",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"\",\n  \"password\": \"\",\n  \"is_superuser\": false\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{URL}}/mqtt/create",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add User",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const crypto = require('crypto-js');",
+							"",
+							"// ===== Generate UUID v4 =====",
+							"function uuidv4() {",
+							"  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {",
+							"    const r = Math.random() * 16 | 0;",
+							"    const v = c === 'x' ? r : (r & 0x3 | 0x8);",
+							"    return v.toString(16);",
+							"  });",
+							"}",
+							"",
+							"// ===== Generate random plain password =====",
+							"function generatePassword(len = 12) {",
+							"  const chars = \"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\";",
+							"  return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join('');",
+							"}",
+							"",
+							"// ===== Hash using SHA-256 =====",
+							"function sha256(str) {",
+							"  return crypto.SHA256(str).toString(crypto.enc.Hex);",
+							"}",
+							"",
+							"// ===== Generate random integer (for topic) =====",
+							"function randomInt(min = 1000, max = 9999) {",
+							"  return Math.floor(Math.random() * (max - min + 1)) + min;",
+							"}",
+							"",
+							"// ===== Main process =====",
+							"const USERNAME = uuidv4();",
+							"const PLAIN_PASSWORD = generatePassword();",
+							"const PASSWORD = sha256(PLAIN_PASSWORD);",
+							"const TOPIC = `${USERNAME}/data/${randomInt()}`;",
+							"",
+							"// ===== Save to collection variables =====",
+							"pm.collectionVariables.set(\"USERNAME\", USERNAME);",
+							"pm.collectionVariables.set(\"PLAIN_PASSWORD\", PLAIN_PASSWORD);",
+							"pm.collectionVariables.set(\"PASSWORD\", PASSWORD);",
+							"pm.collectionVariables.set(\"TOPIC\", TOPIC);",
+							"",
+							"// ===== Debug log =====",
+							"console.log(\"✅ USERNAME:\", USERNAME);",
+							"console.log(\"✅ PLAIN_PASSWORD:\", PLAIN_PASSWORD);",
+							"console.log(\"✅ PASSWORD (SHA256):\", PASSWORD);",
+							"console.log(\"✅ TOPIC:\", TOPIC);",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"{{USERNAME}}\",\n  \"password\": \"{{PASSWORD}}\",\n  \"is_superuser\": false\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{URL}}/mqtt/create",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add User with Exists Username",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"{{USERNAME}}\",\n  \"password\": \"{{PASSWORD}}\",\n  \"is_superuser\": false\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{URL}}/mqtt/create",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check User without Authorization",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{URL}}/mqtt/check",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"check"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check User with Empty Payload",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"\",\n    \"password\": \"\",\n    \"method\": \"credentials\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{URL}}/mqtt/check",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"check"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check User with Not Found Username",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"farismnrr_data\",\n    \"password\": \"{{PASSWORD}}\",\n    \"method\": \"credentials\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{URL}}/mqtt/check",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"check"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check User with Invalid Credentials",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"{{USERNAME}}\",\n    \"password\": \"farismnrr_data\",\n    \"method\": \"credentials\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{URL}}/mqtt/check",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"check"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check User with Credentials",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"{{USERNAME}}\",\n    \"password\": \"{{PASSWORD}}\",\n    \"method\": \"credentials\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{URL}}/mqtt/check",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"check"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check User with JWT",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"{{USERNAME}}\",\n    \"password\": \"\",\n    \"method\": \"jwt\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{URL}}/mqtt/check",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"check"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check User ACL without Authorization",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{URL}}/mqtt/acl",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"acl"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check User ACL with Empty Payload",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"\",\n    \"topic\": \"\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{URL}}/mqtt/acl",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"acl"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check User ACL not Found Username",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"farismnrr_data\",\n    \"topic\": \"{{TOPIC}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{URL}}/mqtt/acl",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"acl"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check User ACL with Correct Access",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"{{USERNAME}}\",\n    \"topic\": \"{{TOPIC}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{URL}}/mqtt/acl",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"acl"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check User ACL with Invalid Access",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"{{USERNAME}}\",\n    \"topic\": \"ee5c13a1-8325-4c29-ae1d-1b9ad773c807/data/12\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{URL}}/mqtt/acl",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"acl"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete User without Authorization",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{URL}}/mqtt/{{USERNAME}}",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"{{USERNAME}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete User with Not Found Username",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{URL}}/mqtt/farismnrr_data",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"farismnrr_data"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check User with Deleted Credentials",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"// Check User with Deleted Credentials",
+							"pm.test(\"Status is 401 or 403 for deleted credentials\", function () {",
+							"    pm.expect([401, 403]).to.include(pm.response.code);",
+							"});",
+							"pm.test(\"Error message present\", function () {",
+							"    var json = pm.response.json();",
+							"    pm.expect(json).to.have.any.keys(\"error\", \"message\");",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"{{USERNAME}}\",\n    \"password\": \"{{PASSWORD}}\",\n    \"method\": \"credentials\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{URL}}/mqtt/check",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"check"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check User ACL with Deleted Credentials",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"{{USERNAME}}\",\n    \"topic\": \"{{TOPIC}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{URL}}/mqtt/acl",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"acl"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete User",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"// Delete User",
+							"pm.test(\"Status is 200 or 204 for successful delete\", function () {",
+							"    pm.expect([200, 204]).to.include(pm.response.code);",
+							"});",
+							"pm.test(\"Handles not found\", function () {",
+							"    pm.expect([200, 204, 404]).to.include(pm.response.code);",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{URL}}/mqtt/{{USERNAME}}",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt",
+						"{{USERNAME}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Users",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"// Get All Users",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response is array of users\", function () {",
+							"    var json = pm.response.json();",
+							"    pm.expect(Array.isArray(json)).to.be.true;",
+							"    if(json.length > 0) {",
+							"        pm.expect(json[0]).to.have.property(\"id\");",
+							"        pm.expect(json[0]).to.have.property(\"username\");",
+							"    }",
+							"});",
+							"",
+							"pm.test(\"Handles unauthorized\", function () {",
+							"    pm.expect([200, 401, 403]).to.include(pm.response.code);",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{URL}}/mqtt",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"mqtt"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Healthcheck",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{URL}}",
+					"host": [
+						"{{URL}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{API_KEY}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "API_KEY",
+			"value": ""
+		},
+		{
+			"key": "URL",
+			"value": ""
+		},
+		{
+			"key": "USERNAME",
+			"value": ""
+		},
+		{
+			"key": "PASSWORD",
+			"value": ""
+		},
+		{
+			"key": "PLAIN_PASSWORD",
+			"value": ""
+		},
+		{
+			"key": "TOPIC",
+			"value": ""
+		}
+	]
+}

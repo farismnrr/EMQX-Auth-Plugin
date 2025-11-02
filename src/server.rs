@@ -13,15 +13,18 @@ use crate::handler::create_mqtt_handler::{create_mqtt_handler, AppState as Creat
 use crate::handler::get_mqtt_list_handler::{get_mqtt_list_handler, AppState as GetListAppState};
 use crate::handler::mqtt_login_handler::{login_with_credentials_handler, AppState as MqttLoginAppState};
 use crate::handler::mqtt_acl_handler::{mqtt_acl_handler, AppState as MqttAclAppState};
+use crate::handler::soft_delete_mqtt_handler::{soft_delete_mqtt, AppState as SoftDeleteMqttAppState};
 
 use crate::services::create_mqtt_service::CreateMqttService;
 use crate::services::get_mqtt_list_service::GetMqttListService;
 use crate::services::mqtt_login_service::MqttLoginService;
 use crate::services::mqtt_acl_service::MqttAclService;
+use crate::services::soft_delete_mqtt_service::SoftDeleteMqttService;
 
 use crate::repositories::create_mqtt_repository::CreateMqttRepository;
 use crate::repositories::get_mqtt_list_repository::GetMqttListRepository;
 use crate::repositories::get_mqtt_by_username_repository::GetMqttByUsernameRepository;
+use crate::repositories::soft_delete_mqtt_repository::SoftDeleteMqttRepository;
 
 async fn healthcheck() -> impl Responder {
     HttpResponse::Ok()
@@ -83,25 +86,28 @@ pub async fn run_server() -> std::io::Result<()> {
     // =====================
     // 🧩 Repository Layer
     // =====================
-    let create_repo = Arc::new(CreateMqttRepository::new(Arc::clone(&db)));
-    let list_repo = Arc::new(GetMqttListRepository::new(Arc::clone(&db)));
-    let getbyusername_repo = Arc::new(GetMqttByUsernameRepository::new(Arc::clone(&db)));
+    let create_mqtt_repo = Arc::new(CreateMqttRepository::new(Arc::clone(&db)));
+    let get_mqtt_list_repo = Arc::new(GetMqttListRepository::new(Arc::clone(&db)));
+    let get_by_username_repo = Arc::new(GetMqttByUsernameRepository::new(Arc::clone(&db)));
+    let soft_delete_mqtt_repo = Arc::new(SoftDeleteMqttRepository::new(Arc::clone(&db)));
 
     // =====================
     // 🛠️ Service Layer
     // =====================
-    let create_mqtt_service = Arc::new(CreateMqttService::new(Arc::clone(&create_repo), Arc::clone(&getbyusername_repo)));
-    let get_mqtt_list_service = Arc::new(GetMqttListService::new(Arc::clone(&list_repo)));
-    let mqtt_login_service = Arc::new(MqttLoginService::new(Arc::clone(&getbyusername_repo), secret_key));
-    let mqtt_acl_service = Arc::new(MqttAclService::new(Arc::clone(&getbyusername_repo)));
+    let create_mqtt_service = Arc::new(CreateMqttService::new(Arc::clone(&create_mqtt_repo), Arc::clone(&get_by_username_repo)));
+    let get_mqtt_list_service = Arc::new(GetMqttListService::new(Arc::clone(&get_mqtt_list_repo)));
+    let mqtt_login_service = Arc::new(MqttLoginService::new(Arc::clone(&get_by_username_repo), secret_key));
+    let mqtt_acl_service = Arc::new(MqttAclService::new(Arc::clone(&get_by_username_repo)));
+    let soft_delete_mqtt_service = Arc::new(SoftDeleteMqttService::new(Arc::clone(&get_by_username_repo), Arc::clone(&soft_delete_mqtt_repo)));
 
     // =====================
     // 🚀 App State
     // =====================
-    let create_state = web::Data::new(CreateMqttAppState { create_mqtt_service });
-    let list_state = web::Data::new(GetListAppState { get_mqtt_list_service });
-    let login_state = web::Data::new(MqttLoginAppState { mqtt_login_service });
-    let acl_state = web::Data::new(MqttAclAppState { mqtt_acl_service });
+    let create_mqtt_state = web::Data::new(CreateMqttAppState { create_mqtt_service });
+    let get_mqtt_list_state = web::Data::new(GetListAppState { get_mqtt_list_service });
+    let mqtt_login_state = web::Data::new(MqttLoginAppState { mqtt_login_service });
+    let mqtt_acl_state = web::Data::new(MqttAclAppState { mqtt_acl_service });
+    let soft_delete_mqtt_state = web::Data::new(SoftDeleteMqttAppState { soft_delete_mqtt_service });
 
     // =====================
     // 🌐 Start Server
@@ -109,10 +115,11 @@ pub async fn run_server() -> std::io::Result<()> {
     info!("🚀 Actix server running on http://0.0.0.0:5500");
     let server_result = HttpServer::new(move || {
         App::new()
-            .app_data(create_state.clone())
-            .app_data(list_state.clone())
-            .app_data(login_state.clone())
-            .app_data(acl_state.clone())
+            .app_data(create_mqtt_state.clone())
+            .app_data(get_mqtt_list_state.clone())
+            .app_data(mqtt_login_state.clone())
+            .app_data(mqtt_acl_state.clone())
+            .app_data(soft_delete_mqtt_state.clone())
             .wrap(ApiKeyMiddleware)
             .wrap(PoweredByMiddleware)
             .wrap(RequestLoggerMiddleware)
@@ -127,6 +134,7 @@ pub async fn run_server() -> std::io::Result<()> {
                     .route("/create", web::post().to(create_mqtt_handler))
                     .route("/check", web::post().to(login_with_credentials_handler))
                     .route("/acl", web::post().to(mqtt_acl_handler))
+                    .route("/{username}", web::delete().to(soft_delete_mqtt))
 
                     // Development only
                     .route("", web::get().to(get_mqtt_list_handler)),
@@ -144,9 +152,10 @@ pub async fn run_server() -> std::io::Result<()> {
     // 🧹 Cleanup
     // =====================
     info!("Shutting down server...");
-    drop(create_repo);
-    drop(list_repo);
-    drop(getbyusername_repo);
+    drop(create_mqtt_repo);
+    drop(get_mqtt_list_repo);
+    drop(get_by_username_repo);
+    drop(soft_delete_mqtt_repo);
 
     info!("Closing RocksDB at {}", db_path);
     close_rocksdb(db);

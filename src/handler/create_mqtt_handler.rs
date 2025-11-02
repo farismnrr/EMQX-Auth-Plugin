@@ -16,15 +16,12 @@ pub async fn create_mqtt_handler(
     body: web::Json<CreateMqttDTO>,
 ) -> impl Responder {
     match data.create_mqtt_service.create_mqtt(body.into_inner()) {
-        Ok((username, password, is_superuser)) => {
-            let dto = CreateMqttDTO { username, password, is_superuser };
-            HttpResponse::Ok().json(ResponseDTO {
-                success: true,
-                message: "User MQTT created successfully",
-                data: Some(dto),
-                result: None,
-            })
-        },
+        Ok(_) => HttpResponse::Ok().json(ResponseDTO::<()> {
+            success: true,
+            message: "User mqtt created successfully",
+            data: None,
+            result: None
+        }),
         Err(e) => match &e {
             MqttServiceError::BadRequest(validation_errors) => {
                 e.to_http_response_with_details(Some(validation_errors))

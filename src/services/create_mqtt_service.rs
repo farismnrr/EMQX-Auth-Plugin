@@ -17,7 +17,7 @@ impl CreateMqttService {
         Self { repo_create, repo_get }
     }
 
-    pub fn create_mqtt(&self, dto: CreateMqttDTO) -> Result<(String, String, bool), MqttServiceError> {
+    pub fn create_mqtt(&self, dto: CreateMqttDTO) -> Result<bool, MqttServiceError> {
         self.create_mqtt_validation(&dto)?;
         
         if self.repo_get.get_by_username(&dto.username)?.is_some() {
@@ -27,7 +27,7 @@ impl CreateMqttService {
         let hashed = hash_password(&dto.password);
         self.repo_create.create_mqtt(&dto.username, &hashed, dto.is_superuser)?;
         debug!("[Service | CreateMQTT] User MQTT created successfully: {}", &dto.username);
-        Ok((dto.username, dto.password, dto.is_superuser))
+        Ok(true)
     }
 
     fn create_mqtt_validation(&self, dto: &CreateMqttDTO) -> Result<bool, MqttServiceError> {

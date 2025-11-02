@@ -44,3 +44,8 @@ pub struct MqttAclDTO {
     pub username: String,
     pub topic: String,
 }
+
+#[derive(Deserialize)]
+pub struct DeleteMqttDTO {
+    pub username: String,
+}

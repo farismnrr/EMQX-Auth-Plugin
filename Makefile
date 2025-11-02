@@ -3,7 +3,7 @@
 COMPOSE := docker compose
 COMPOSE_FILE := docker-compose.yml
 
-.PHONY: help docker docker\ run docker\ stop docker\ ps key
+.PHONY: help docker docker\ run docker\ stop docker\ ps run build key
 .DEFAULT_GOAL := help
 
 help:
@@ -13,6 +13,7 @@ help:
 	@echo "  docker run [service...]   Start one or more services (e.g. make docker run rocksdb)"
 	@echo "  docker stop [service...]  Stop one or more services (e.g. make docker stop rocksdb)"
 	@echo "  docker ps [service...]    Show docker compose ps"
+	@echo "  run build                 Build the Rust project and Docker plugin image"
 	@echo "  key                       Generate a random SHA256 hash"
 
 # Docker management
@@ -48,6 +49,11 @@ docker\ ps:
 	else \
 		$(COMPOSE) -f $(COMPOSE_FILE) ps $$services; \
 	fi
+
+# Build project and Docker plugin
+build:
+	@echo "Building Docker plugin image (includes Rust build)..."
+	@bash autobuild.sh
 
 # Generate random SHA256 hash
 key:
