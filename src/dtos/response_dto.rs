@@ -8,9 +8,9 @@ where
     pub success: bool,
     pub message: &'a str,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub data: Option<T>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub result: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Option<T>,
 }
 
 #[derive(Serialize)]

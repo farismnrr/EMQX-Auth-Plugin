@@ -44,6 +44,7 @@ impl AppError for UserServiceError {
             Self::InvalidCredentials(_) => StatusCode::UNAUTHORIZED,
             Self::BadRequest(_) => StatusCode::BAD_REQUEST,
             Self::UserNotActive(_) => StatusCode::FORBIDDEN,
+            Self::JwtError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
@@ -55,7 +56,7 @@ impl AppError for UserServiceError {
     }
 }
 
-pub fn handle_check_user_active_error(error: &UserServiceError) -> HttpResponse {
+pub fn handle_user_login(error: &UserServiceError) -> HttpResponse {
     match error {
         UserServiceError::BadRequest(errors) => {
             let response: ErrorResponseDTO<&Vec<ValidationError>> = ErrorResponseDTO {

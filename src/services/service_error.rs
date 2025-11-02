@@ -24,4 +24,7 @@ pub enum UserServiceError {
 
     #[error("User is not active or deleted: {0}")]
     UserNotActive(String),
+
+    #[error("JWT error: {0}")]
+    JwtError(String),
 }

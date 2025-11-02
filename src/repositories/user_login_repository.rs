@@ -6,16 +6,16 @@ use log::{debug, error};
 use crate::entities::user_entity::UserEntity;
 use crate::repositories::repository_error::UserRepositoryError;
 
-pub struct CheckUserActiveRepository {
+pub struct UserLoginRepository {
     db: Arc<DB>,
 }
 
-impl CheckUserActiveRepository {
+impl UserLoginRepository {
     pub fn new(db: Arc<DB>) -> Self {
-        CheckUserActiveRepository { db }
+        UserLoginRepository { db }
     }
 
-    pub fn check_user_active(&self, username: &str) -> Result<Option<UserEntity>, UserRepositoryError> {
+    pub fn login_with_credentials(&self, username: &str) -> Result<Option<UserEntity>, UserRepositoryError> {
         // Build RocksDB key
         let key: String = format!("users:{}", username);
 

@@ -22,4 +22,17 @@ pub struct CreateUserDTO {
 pub struct CheckUserActiveDTO {
     pub username: String,
     pub password: String,
+    pub method: Option<AuthType>,
+}
+
+#[derive(Serialize)]
+pub struct UserJwtDTO {
+    pub token: String,
+}
+
+#[derive(Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum AuthType {
+    Credentials,
+    Jwt,
 }

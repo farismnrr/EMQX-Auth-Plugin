@@ -11,15 +11,15 @@ use crate::middleware::logger_request::RequestLoggerMiddleware;
 
 use crate::handler::create_user_handler::{create_user_handler, AppState as CreateUserAppState};
 use crate::handler::get_user_list_handler::{get_user_list_handler, AppState as GetListAppState};
-use crate::handler::check_user_active_handler::{check_user_active_handler, AppState as CheckUserActiveAppState};
+use crate::handler::user_login_handler::{login_with_credentials_handler, AppState as UserLoginAppState};
 
 use crate::services::create_user_service::CreateUserService;
 use crate::services::get_user_list_service::GetUserListService;
-use crate::services::check_user_active_service::CheckUserActiveService;
+use crate::services::user_login_service::UserLoginService;
 
 use crate::repositories::create_user_repository::CreateUserRepository;
 use crate::repositories::get_user_list_repository::GetUserListRepository;
-use crate::repositories::check_user_active_repository::CheckUserActiveRepository;
+use crate::repositories::user_login_repository::UserLoginRepository;
 
 async fn healthcheck() -> impl Responder {
     HttpResponse::Ok()
@@ -32,11 +32,15 @@ pub async fn run_server() -> std::io::Result<()> {
     // 🌱 Load Environment Variables
     // =====================
     dotenvy::dotenv().ok();
+    let env = env_logger::Env::new().filter_or("LOG_LEVEL", "info");
+    let db_path = std::env::var("DB_PATH")
+        .expect("❌ Environment variable DB_PATH is not set");
+    let secret_key = std::env::var("SECRET_KEY")
+        .expect("❌ Environment variable SECRET_KEY is not set");
 
     // =====================
     // 🪵 Initialize logger with custom format + color
     // =====================
-    let env = env_logger::Env::new().filter_or("LOG_LEVEL", "info");
     env_logger::Builder::from_env(env)
         .format(|buf, record| {
             let ts = Local::now().format("%Y-%m-%d %H:%M:%S%.3f");
@@ -67,8 +71,6 @@ pub async fn run_server() -> std::io::Result<()> {
     // =====================
     // 🗄️ Database Initialization
     // =====================
-    let db_path = std::env::var("DB_PATH")
-        .expect("❌ Environment variable DB_PATH is not set");
     let db = init_rocksdb(&db_path)
         .map_err(|e| {
             error!("❌ Failed to initialize RocksDB at {}: {}", db_path, e);
@@ -81,21 +83,21 @@ pub async fn run_server() -> std::io::Result<()> {
     // =====================
     let create_repo = Arc::new(CreateUserRepository::new(Arc::clone(&db)));
     let list_repo = Arc::new(GetUserListRepository::new(Arc::clone(&db)));
-    let check_user_repo = Arc::new(CheckUserActiveRepository::new(Arc::clone(&db)));
+    let login_repo = Arc::new(UserLoginRepository::new(Arc::clone(&db)));
 
     // =====================
     // 🛠️ Service Layer
     // =====================
     let create_user_service = Arc::new(CreateUserService::new(Arc::clone(&create_repo)));
     let get_user_list_service = Arc::new(GetUserListService::new(Arc::clone(&list_repo)));
-    let check_user_active_service = Arc::new(CheckUserActiveService::new(Arc::clone(&check_user_repo)));
+    let user_login_service = Arc::new(UserLoginService::new(Arc::clone(&login_repo), secret_key));
 
     // =====================
     // 🚀 App State
     // =====================
     let create_state = web::Data::new(CreateUserAppState { create_user_service });
     let list_state = web::Data::new(GetListAppState { get_user_list_service });
-    let check_state = web::Data::new(CheckUserActiveAppState { check_user_active_service });
+    let login_state = web::Data::new(UserLoginAppState { login_with_credentials_service: user_login_service });
 
     // =====================
     // 🌐 Start Server
@@ -105,7 +107,7 @@ pub async fn run_server() -> std::io::Result<()> {
         App::new()
             .app_data(create_state.clone())
             .app_data(list_state.clone())
-            .app_data(check_state.clone())
+            .app_data(login_state.clone())
             .wrap(ApiKeyMiddleware)
             .wrap(PoweredByMiddleware)
             .wrap(RequestLoggerMiddleware)
@@ -118,7 +120,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .service(
                 web::scope("/users")
                     .route("/create", web::post().to(create_user_handler))
-                    .route("/check", web::post().to(check_user_active_handler))
+                    .route("/check", web::post().to(login_with_credentials_handler))
 
                     // Development only
                     .route("", web::get().to(get_user_list_handler)),
@@ -138,7 +140,7 @@ pub async fn run_server() -> std::io::Result<()> {
     info!("Shutting down server...");
     drop(create_repo);
     drop(list_repo);
-    drop(check_user_repo);
+    drop(login_repo);
 
     info!("Closing RocksDB at {}", db_path);
     close_rocksdb(db);
