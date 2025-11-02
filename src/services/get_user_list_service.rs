@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use log::debug;
 use crate::repositories::get_user_list_repository::GetUserListRepository;
 use crate::services::service_error::UserServiceError;
 use crate::dtos::user_dto::UserDTO;
@@ -19,6 +20,7 @@ impl GetUserListService {
             password: user.password,
             is_deleted: user.is_deleted,
         }).collect();
+        debug!("[Service | GetUserList] User list retrieved successfully.");
         Ok(dto_users)
     }
 }

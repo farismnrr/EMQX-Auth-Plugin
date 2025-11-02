@@ -3,6 +3,7 @@ use actix_web::{
     Error, http::header,
 };
 use futures_util::future::{ok, Ready, LocalBoxFuture};
+use log::debug;
 
 #[derive(Clone)]
 pub struct PoweredByMiddleware;
@@ -42,6 +43,7 @@ where
     }
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
+        let path = req.path().to_string();
         let fut = self.service.call(req);
         Box::pin(async move {
             let mut res = fut.await?;
@@ -49,6 +51,7 @@ where
                 header::HeaderName::from_static("x-powered-by"),
                 header::HeaderValue::from_static("IoTNet"),
             );
+            debug!("[Middleware | PoweredBy] set 'x-powered-by' header for path='{}'", path);
             Ok(res)
         })
     }

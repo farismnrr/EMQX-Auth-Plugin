@@ -6,6 +6,7 @@ use actix_web::{
     Error, HttpResponse,
 };
 use futures_util::future::{ok, Ready, LocalBoxFuture};
+use log::debug;
 use crate::dtos::response_dto::ErrorResponseDTO;
 
 #[derive(Clone)]
@@ -49,15 +50,20 @@ where
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let expected_key = self.api_key.clone();
+        let path = req.path().to_string();
+        let has_auth_header = req.headers().get(header::AUTHORIZATION).is_some();
         let auth_value = req
             .headers()
             .get(header::AUTHORIZATION)
             .and_then(|v| v.to_str().ok())
             .map(str::trim)
             .unwrap_or("");
+        debug!("[Middleware | ApiKey] call - path='{}' auth_header_present={} auth_len={} expected_key_set={}",
+            path, has_auth_header, auth_value.len(), !expected_key.is_empty());
 
         let is_valid = !expected_key.is_empty() && is_authorized(auth_value, &expected_key);
         if !is_valid {
+            debug!("[Middleware | ApiKey] Unauthorized request to '{}'", path);
             let res = HttpResponse::Unauthorized()
                 .insert_header((header::CONTENT_TYPE, "application/json"))
                 .json(ErrorResponseDTO {
@@ -69,6 +75,7 @@ where
             return Box::pin(async move { Ok(req.into_response(res.map_into_right_body())) });
         }
 
+    debug!("[Middleware | ApiKey] Authorized request to '{}'", path);
         let fut = self.service.call(req);
         Box::pin(async move {
             let res = fut.await?;

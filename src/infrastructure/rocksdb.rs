@@ -8,6 +8,7 @@
 use rocksdb::{Options, DB, Error};
 use std::path::Path;
 use std::sync::Arc;
+use log::debug;
 
 /// Convenience: initialize RocksDB and return an `Arc<DB>` directly.
 ///
@@ -18,6 +19,7 @@ pub fn init_rocksdb<P: AsRef<Path>>(path: P) -> Result<Arc<DB>, Error> {
     let mut opts = Options::default();
     opts.create_if_missing(true);
     let db = DB::open(&opts, path)?;
+    debug!("[Infrastructure | RocksDB] Database opened successfully.");
     Ok(Arc::new(db))
 }
 
@@ -31,4 +33,5 @@ pub fn close_rocksdb(db: Arc<DB>) {
     if let Ok(db_inner) = Arc::try_unwrap(db) {
         drop(db_inner);
     }
+    debug!("[Infrastructure | RocksDB] Database closed successfully.");
 }

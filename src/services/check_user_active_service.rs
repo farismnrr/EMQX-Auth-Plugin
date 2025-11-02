@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use log::debug;
 use crate::repositories::check_user_active_repository::CheckUserActiveRepository;
 use crate::services::service_error::{UserServiceError, ValidationError};
 use crate::dtos::user_dto::CheckUserActiveDTO;
@@ -18,16 +19,19 @@ impl CheckUserActiveService {
 
         let user = self.repo.check_user_active(&dto.username)?;
         if user.is_none() {
+            debug!("[Service | CheckUserActive] User not found: {}", dto.username);
             return Err(UserServiceError::UserNotFound("User not found".to_string()));
         }
 
         if user.as_ref().unwrap().is_deleted {
+            debug!("[Service | CheckUserActive] User is deleted or inactive: {}", dto.username);
             return Err(UserServiceError::UserNotActive("User is not active or deleted".to_string()));
         }
 
         let user_ref = user.as_ref().unwrap();
         let is_valid = verify_password(&dto.password, &user_ref.password);
         if !is_valid {
+            debug!("[Service | CheckUserActive] Invalid credentials for user: {}", dto.username);
             return Err(UserServiceError::InvalidCredentials("Invalid credentials".to_string()));
         }
 
@@ -55,6 +59,7 @@ impl CheckUserActiveService {
             return Err(UserServiceError::BadRequest(errors));
         }
 
+        debug!("[Service | CheckUserActive] User input validation passed.");
         Ok(true)
     }
 }

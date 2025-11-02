@@ -1,9 +1,11 @@
 use actix_web::{App, HttpServer, middleware, web};
 use std::sync::Arc;
+use log::{info, error};
 
 use crate::infrastructure::rocksdb::{init_rocksdb, close_rocksdb};
 use crate::middleware::api_key::ApiKeyMiddleware;
 use crate::middleware::powered_by::PoweredByMiddleware;
+use crate::middleware::logger_request::RequestLoggerMiddleware;
 
 use crate::handler::create_user_handler::{create_user_handler, AppState as CreateUserAppState};
 use crate::handler::get_user_list_handler::{get_user_list_handler, AppState as GetListAppState};
@@ -24,11 +26,23 @@ pub async fn run_server() -> std::io::Result<()> {
     dotenvy::dotenv().ok();
 
     // =====================
+    // 🪵 Initialize logger from environment
+    // =====================
+    let env = env_logger::Env::new().filter_or("LOG_LEVEL", "info");
+    env_logger::Builder::from_env(env)
+        .format_timestamp_secs()
+        .format_target(false)
+        .init();
+    info!("🟢 Logging initialized");
+
+    // =====================
     // 🗄️ Database Initialization
     // =====================
-    let db = init_rocksdb("./rocksdb-data/iotnet")
+    let db_path = std::env::var("DB_PATH")
+        .expect("❌ Environment variable DB_PATH is not set");
+    let db = init_rocksdb(&db_path)
         .map_err(|e| {
-            eprintln!("❌ Failed to initialize RocksDB: {}", e);
+            error!("❌ Failed to initialize RocksDB at {}: {}", db_path, e);
             std::io::Error::new(std::io::ErrorKind::Other, "Failed to initialize RocksDB")
         })?;
 
@@ -56,7 +70,7 @@ pub async fn run_server() -> std::io::Result<()> {
     // =====================
     // 🌐 Start Server
     // =====================
-    println!("🚀 Actix server running on http://0.0.0.0:5500");
+    info!("🚀 Actix server running on http://0.0.0.0:5500");
     let server_result = HttpServer::new(move || {
         App::new()
             .app_data(create_state.clone())
@@ -64,6 +78,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(check_state.clone())
             .wrap(ApiKeyMiddleware)
             .wrap(PoweredByMiddleware)
+            .wrap(RequestLoggerMiddleware)
             .wrap(middleware::Compress::default())
             .service(
                 web::scope("/users")
@@ -78,17 +93,19 @@ pub async fn run_server() -> std::io::Result<()> {
     .run()
     .await
     .map_err(|e| {
-        eprintln!("❌ Server error: {}", e);
+        error!("❌ Server error: {}", e);
         e
     });
 
     // =====================
     // 🧹 Cleanup
     // =====================
+    info!("Shutting down server...");
     drop(create_repo);
     drop(list_repo);
     drop(check_user_repo);
-    println!("Shutting down... closing RocksDB instance");
+
+    info!("Closing RocksDB at {}", db_path);
     close_rocksdb(db);
 
     server_result
