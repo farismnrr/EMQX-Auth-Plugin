@@ -13,7 +13,7 @@ impl CheckUserActiveService {
         Self { repo }
     }
 
-    pub fn validate_user(&self, dto: CheckUserActiveDTO) -> Result<bool, UserServiceError> {
+    pub fn check_user_active(&self, dto: CheckUserActiveDTO) -> Result<bool, UserServiceError> {
         self.user_input_validation(&dto)?;
 
         let user = self.repo.check_user_active(&dto.username)?;
@@ -36,7 +36,7 @@ impl CheckUserActiveService {
     
     fn user_input_validation(&self, dto: &CheckUserActiveDTO) -> Result<bool, UserServiceError> {
         let mut errors = Vec::new();
-        
+
         if dto.username.trim().is_empty() {
             errors.push(ValidationError {
                 field: "username".to_string(),

@@ -14,7 +14,7 @@ pub async fn check_user_active_handler(
     data: web::Data<AppState>,
     body: web::Json<CheckUserActiveDTO>,
 ) -> impl Responder {
-    match data.check_user_active_service.validate_user(body.into_inner()) {
+    match data.check_user_active_service.check_user_active(body.into_inner()) {
         Ok(_) => {
             HttpResponse::Ok().json(ResponseDTO::<()> {
                 success: true,

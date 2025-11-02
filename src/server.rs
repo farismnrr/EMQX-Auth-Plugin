@@ -18,27 +18,45 @@ use crate::repositories::get_user_list_repository::GetUserListRepository;
 use crate::repositories::check_user_active_repository::CheckUserActiveRepository;
 
 pub async fn run_server() -> std::io::Result<()> {
-    // init db
-    let db = init_rocksdb("./rocksdb-data/iotnet")
-        .expect("❌ Failed to initialize RocksDB");
+    // =====================
+    // 🌱 Load Environment Variables
+    // =====================
+    dotenvy::dotenv().ok();
 
-    // di layer: create repository instances expected by services
+    // =====================
+    // 🗄️ Database Initialization
+    // =====================
+    let db = init_rocksdb("./rocksdb-data/iotnet")
+        .map_err(|e| {
+            eprintln!("❌ Failed to initialize RocksDB: {}", e);
+            std::io::Error::new(std::io::ErrorKind::Other, "Failed to initialize RocksDB")
+        })?;
+
+    // =====================
+    // 🧩 Repository Layer
+    // =====================
     let create_repo = Arc::new(CreateUserRepository::new(Arc::clone(&db)));
     let list_repo = Arc::new(GetUserListRepository::new(Arc::clone(&db)));
     let check_user_repo = Arc::new(CheckUserActiveRepository::new(Arc::clone(&db)));
 
+    // =====================
+    // 🛠️ Service Layer
+    // =====================
     let create_user_service = Arc::new(CreateUserService::new(Arc::clone(&create_repo)));
     let get_user_list_service = Arc::new(GetUserListService::new(Arc::clone(&list_repo)));
     let check_user_active_service = Arc::new(CheckUserActiveService::new(Arc::clone(&check_user_repo)));
 
-    // create per-handler states (each handler defines its own AppState type)
+    // =====================
+    // 🚀 App State
+    // =====================
     let create_state = web::Data::new(CreateUserAppState { create_user_service });
     let list_state = web::Data::new(GetListAppState { get_user_list_service });
     let check_state = web::Data::new(CheckUserActiveAppState { check_user_active_service });
 
+    // =====================
+    // 🌐 Start Server
+    // =====================
     println!("🚀 Actix server running on http://0.0.0.0:5500");
-
-    // http server
     let server_result = HttpServer::new(move || {
         App::new()
             .app_data(create_state.clone())
@@ -58,12 +76,19 @@ pub async fn run_server() -> std::io::Result<()> {
     })
     .bind(("0.0.0.0", 5500))?
     .run()
-    .await;
+    .await
+    .map_err(|e| {
+        eprintln!("❌ Server error: {}", e);
+        e
+    });
 
-    // cleanup
+    // =====================
+    // 🧹 Cleanup
+    // =====================
     drop(create_repo);
     drop(list_repo);
     drop(check_user_repo);
+    println!("Shutting down... closing RocksDB instance");
     close_rocksdb(db);
 
     server_result

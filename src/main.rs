@@ -10,6 +10,5 @@ mod dtos;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    dotenvy::dotenv().ok();
     server::run_server().await
 }
